@@ -1,50 +1,27 @@
-# import the necessary packages
+import streamlit as st
 from PIL import Image
 import pytesseract
-import argparse
-import cv2
 import os
- 
-# Xây dựng hệ thống tham số đầu vào
-# -i file ảnh cần nhận dạng
-# -p tham số tiền xử lý ảnh (có thể bỏ qua nếu không cần). Nếu dùng: blur : Làm mờ ảnh để giảm noise, thresh: Phân tách đen trắng
-ap = argparse.ArgumentParser()
-ap.add_argument(r"hoadon2.png", "--image", required=True,
-	help="Đường dẫn đến ảnh muốn nhận dạng")
-ap.add_argument("-p", "--preprocess", type=str, default="thresh",
-	help="Bước tiền xử lý ảnh")
-args = vars(ap.parse_args())
 
-# Đọc file ảnh và chuyển về ảnh xám
-image = cv2.imread(args["image"])
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
- 
-# Check xem có sử dụng tiền xử lý ảnh không
-# Nếu phân tách đen trắng
-if args["preprocess"] == "thresh":
-	gray = cv2.threshold(gray, 0, 255,
-		cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
- 
-# Nếu làm mờ ảnh
-elif args["preprocess"] == "blur":
-	gray = cv2.medianBlur(gray, 3)
- 
-# Ghi tạm ảnh xuống ổ cứng để sau đó apply OCR
-filename = "{}.png".format(os.getpid())
-cv2.imwrite(filename, gray)
+# Specify the path to the Vietnamese trained data for Tesseract
+pytesseract.pytesseract.tesseract_cmd ='tesseract'
+tessdata_dir_config = '--tessdata-dir "/tessdata/"'
 
-# Load ảnh và apply nhận dạng bằng Tesseract OCR
-text = pytesseract.image_to_string(Image.open(filename),lang='vie')
+st.title("Vietnamese OCR using Tesseract")
 
-# Xóa ảnh tạm sau khi nhận dạng
-os.remove(filename)
+uploaded_files = st.file_uploader("Upload one or more images", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
 
-# In dòng chữ nhận dạng được
-print(text)
- 
-# Hiển thị các ảnh chúng ta đã xử lý.
-cv2.imshow("Image", image)
-cv2.imshow("Output", gray)
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Image', use_column_width=True)
+        st.write("")
+        st.write("Recognizing...")
 
-# Đợi chúng ta gõ phím bất kỳ
-cv2.waitKey(0)
+        # Use Tesseract to do OCR on the image
+        text = pytesseract.image_to_string(image, lang='vie', config=tessdata_dir_config)
+        
+        st.write("**Extracted Text:**")
+        st.text_area(label='', value=text, height=200)
+        st.write("")
+        st.download_button(label='Copy to Clipboard', data=text, mime='text/plain', file_name='extracted_text.txt')
