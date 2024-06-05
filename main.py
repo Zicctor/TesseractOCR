@@ -5,7 +5,7 @@ import os
 
 # Specify the path to the Vietnamese trained data for Tesseract
 pytesseract.pytesseract.tesseract_cmd ='tesseract'
-tessdata_dir_config = '--tessdata-dir "/tessdata/"'
+tessdata_dir_config = '--tessdata-dir "."'
 
 st.title("Vietnamese OCR using Tesseract")
 
